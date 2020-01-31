@@ -1,0 +1,43 @@
+#
+# This is the input file needed to perform Ratchet&Pawl MD simulation
+# based on the CV given by the distance between the ligand's center 
+# of mass and the center of the binding pocket.
+#
+# This input file can be used with all the PLUMED versions >=2.3
+#
+
+# Definition of the center of mass of the ligand, considering only its heavy atoms
+COM ATOMS=1,5,6,10,14,17,18,19,22,23,24,25,26,29  LABEL=ixo
+
+# Definition of the center of mass of the pocket
+COM ATOMS=1396,1398,1400,1403,1404,1406,1408,1409,1411,1413,1415,1416,1449,1451,1453,1456,1458,1459,1495,1497,1499,1501,1505,1509,1510,2838,2840,2842,2845,2846,2848,2850,2852,2854,2856,2857,3605,3607,3609,3612,3613,3615,3617,3618,3620,3622,3624,3625 LABEL=pkt
+
+# Definition of the distance between the ligand and the pocket as a 3d vector xyz
+# (the membrane is in the plane xy)
+DISTANCE ATOMS=ixo,pkt LABEL=d1 COMPONENTS NOPBC
+
+# Definition of the periodicity of the components of the distance 
+# (to avoid jumps in the variable during the simulation due to the 
+# rototranslation of the system)
+d1x: COMBINE ARG=d1.x PERIODIC=-4.7,4.7
+d1y: COMBINE ARG=d1.y PERIODIC=-4.7,4.7
+d1z: COMBINE ARG=d1.z PERIODIC=-8.2,8.2
+
+# Activation of the Ratchet&Pawl MD, to observe the transition of the ligand. 
+# Starting from the bound structure, the bias will move the system outside 
+# the binding cavity with a k=100 kJ/mol/nm until the ligand is 4 nm outside
+# the binding cavity 
+ABMD ...
+  ARG=d1z
+  TO=-4.0
+  KAPPA=100.0
+LABEL=rmd
+... ABMD
+
+
+# Here we print all the data regarding rMD_data
+PRINT ARG=rmd.* STRIDE=500 FILE=rMD_data
+# Here we print the distance between the molecule and the binding pocket
+PRINT ARG=d1z STRIDE=500 FILE=IXO_dist.dat
+
+ENDPLUMED
